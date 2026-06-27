@@ -1,122 +1,70 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { ProtectedRoute, GuestRoute, AdminRoute } from './routes/guards';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Layouts
+import Layout from './components/layout/Layout';
 
+// Landing pages
+import Home     from './pages/landing/Home';
+import Pricing  from './pages/landing/Pricing';
+import NotFound from './pages/NotFound';
+
+// Auth pages
+import Login           from './pages/auth/Login';
+import Register        from './pages/auth/Register';
+import ForgotPassword  from './pages/auth/ForgotPassword';
+import ResetPassword   from './pages/auth/ResetPassword';
+import AuthCallback    from './pages/auth/AuthCallback';
+
+// Dashboard pages
+import Dashboard     from './pages/Dashboard';
+import Sessions      from './pages/dashboard/Sessions';
+import Projects      from './pages/dashboard/Projects';
+import Analytics     from './pages/dashboard/Analytics';
+import Goals         from './pages/dashboard/Goals';
+import Profile       from './pages/dashboard/Profile';
+import Settings      from './pages/dashboard/Settings';
+import Premium       from './pages/dashboard/Premium';
+
+export default function App() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <BrowserRouter>
+      <ThemeProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <Routes>
+              {/* ── Public / Landing ──────────────────────────── */}
+              <Route path="/"         element={<Home />} />
+              <Route path="/pricing"  element={<Pricing />} />
 
-      <div className="ticks"></div>
+              {/* ── Auth ─────────────────────────────────────── */}
+              <Route path="/login"          element={<GuestRoute><Login /></GuestRoute>} />
+              <Route path="/register"       element={<GuestRoute><Register /></GuestRoute>} />
+              <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/callback"  element={<AuthCallback />} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+              {/* ── Protected Dashboard ──────────────────────── */}
+              <Route path="/dashboard" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                <Route index            element={<Dashboard />} />
+                <Route path="sessions"  element={<Sessions />} />
+                <Route path="projects"  element={<Projects />} />
+                <Route path="analytics" element={<Analytics />} />
+                <Route path="goals"     element={<Goals />} />
+                <Route path="profile"   element={<Profile />} />
+                <Route path="settings"  element={<Settings />} />
+                <Route path="premium"   element={<Premium />} />
+              </Route>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+              {/* ── 404 ──────────────────────────────────────── */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </NotificationProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
 }
-
-export default App
