@@ -66,13 +66,15 @@ export async function deleteSession(id, userId) {
 
 // ─── Get Today's Stats ────────────────────────────────────────────────────────
 export async function getTodayStats(userId) {
-  const today = new Date().toISOString().split('T')[0];
+  // Use local midnight to accurately reflect the user's "today"
+  const todayLocalMidnight = new Date();
+  todayLocalMidnight.setHours(0, 0, 0, 0);
+
   const { data, error } = await supabase
     .from('sessions')
     .select('duration_minutes, language')
     .eq('user_id', userId)
-    .gte('started_at', `${today}T00:00:00`)
-    .lte('started_at', `${today}T23:59:59`);
+    .gte('started_at', todayLocalMidnight.toISOString());
   if (error) throw error;
   return data;
 }
@@ -80,7 +82,9 @@ export async function getTodayStats(userId) {
 // ─── Get Weekly Stats ─────────────────────────────────────────────────────────
 export async function getWeeklyStats(userId) {
   const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
+  weekAgo.setHours(0, 0, 0, 0); // Local midnight
+  weekAgo.setDate(weekAgo.getDate() - 7); // 7 days ago
+
   const { data, error } = await supabase
     .from('sessions')
     .select('duration_minutes, language, started_at')

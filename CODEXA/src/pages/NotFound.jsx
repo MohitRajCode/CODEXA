@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import Logo from '../components/common/Logo';
 import { Home, ArrowLeft } from 'lucide-react';
 
 export default function NotFound() {
@@ -10,13 +11,9 @@ export default function NotFound() {
         {/* 404 graphic */}
         <div className="relative mb-8">
           <p className="text-[180px] font-black text-[#1E2235] leading-none select-none">404</p>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-20 h-20 bg-[#6D5DFB]/10 border border-[#6D5DFB]/30 rounded-3xl flex items-center justify-center">
-              <svg width="36" height="36" viewBox="0 0 16 16" fill="none">
-                <path d="M8 1L14 8L8 15L2 8L8 1Z" fill="#6D5DFB" fillOpacity="0.5"/>
-                <path d="M8 4L11 8L8 12L5 8L8 4Z" fill="#6D5DFB"/>
-              </svg>
-            </div>
+          {/* Logo element replacement for 404 art */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 opacity-20 blur-2xl">
+            <div className="w-full h-full bg-gradient-to-br from-[#00D4C0] via-[#38A4F8] to-[#7C3AED] rounded-full" />
           </div>
         </div>
 

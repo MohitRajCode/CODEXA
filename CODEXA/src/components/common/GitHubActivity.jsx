@@ -1,6 +1,13 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp } from 'lucide-react';
-import { githubActivityData, githubStats } from '../../data/mockData';
+import { TrendingUp, GitBranch } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuthContext } from '../../contexts/AuthContext';
+import { fetchContributions } from '../../services/supabase/githubService';
+import { linkGitHubIdentity } from '../../services/supabase/authService';
+import { useToast } from '../../contexts/NotificationContext';
+import { updateProfile } from '../../services/supabase/profileService';
+import { fetchGitHubUser } from '../../services/supabase/githubService';
 
 // Color levels for heatmap (green like GitHub)
 function getColor(count) {
@@ -25,9 +32,126 @@ function getMonthLabels(weeks) {
   return labels;
 }
 
+// Generate an empty 52-week calendar for users not connected
+function generateEmptyCalendar() {
+  const weeks = [];
+  const today = new Date();
+  today.setDate(today.getDate() - (today.getDay() || 7)); // start at previous sunday or today if sunday
+  
+  // Go back 51 weeks
+  let currentDate = new Date(today);
+  currentDate.setDate(currentDate.getDate() - (51 * 7));
+
+  for (let w = 0; w < 52; w++) {
+    const days = [];
+    for (let d = 0; d < 7; d++) {
+      days.push({ date: currentDate.toISOString().split('T')[0], count: 0 });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    weeks.push(days);
+  }
+  return weeks;
+}
+
 export default function GitHubActivity() {
-  const { commits, trend, comparison } = githubStats;
-  const weeks = githubActivityData;
+  const { profile } = useAuthContext();
+  const { error: showError } = useToast();
+  const [data, setData] = useState({ weeks: null, commits: 0, trend: '', comparison: '', isMock: true });
+  const [loading, setLoading] = useState(true);
+
+  const handleConnect = async () => {
+    try {
+      await linkGitHubIdentity();
+    } catch (err) {
+      console.error("OAuth Link Error:", err);
+      showError('OAuth Failed', `Error: ${err.message}. Falling back to token method.`);
+      
+      // Always Fallback to PAT
+      const token = window.prompt(`OAuth failed (${err.message}).\n\nPlease ensure your Supabase 'Site URL' matches your localhost port (usually 5173) in Authentication -> URL Configuration.\n\nAlternatively, you can paste a GitHub Personal Access Token (PAT) below:`);
+      if (token && token.trim()) {
+        try {
+          const ghUser = await fetchGitHubUser(token.trim());
+          
+          // Save to localStorage as a reliable fallback in case DB update fails
+          localStorage.setItem('github_token_fallback', token.trim());
+          localStorage.setItem('github_username_fallback', ghUser.login);
+          
+          try {
+            await updateProfile(profile.id, { 
+              github_token: token.trim(), 
+              github_username: ghUser.login 
+            });
+          } catch (dbErr) {
+            console.warn("DB profile update failed, but token is saved locally.", dbErr);
+          }
+          
+          window.location.reload(); // Quick refresh to load new data
+        } catch (patErr) {
+          showError('Invalid Token', 'The Personal Access Token provided is invalid or expired.');
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    async function loadData() {
+      if (!profile?.github_token || !profile?.github_username) {
+        setData({ 
+          weeks: generateEmptyCalendar(), 
+          commits: 0, 
+          trend: 'Inactive', 
+          comparison: 'this year',
+          isMock: true
+        });
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const cal = await fetchContributions(profile.github_username, profile.github_token);
+        if (cal && cal.weeks) {
+          const mappedWeeks = cal.weeks.map(w => 
+            w.contributionDays.map(d => ({ date: d.date, count: d.contributionCount }))
+          );
+          
+          setData({
+            weeks: mappedWeeks,
+            commits: cal.totalContributions,
+            trend: 'Active',
+            comparison: 'this year',
+            isMock: false
+          });
+        } else {
+          showError('GitHub API Error', 'Failed to parse contribution graph data.');
+          setData({ weeks: generateEmptyCalendar(), commits: 0, trend: 'Inactive', comparison: 'this year', isMock: true });
+        }
+      } catch (error) {
+        console.error("Failed to fetch GitHub contributions:", error);
+        showError('GitHub Sync Failed', `API Error: ${error.message}`);
+        // Fallback on error
+        setData({ 
+          weeks: generateEmptyCalendar(), 
+          commits: 0, 
+          trend: 'Inactive', 
+          comparison: 'this year',
+          isMock: true
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [profile]);
+
+  if (loading || !data.weeks) {
+    return (
+      <div className="bg-[#121523] border border-[#23273B] rounded-2xl p-5 flex items-center justify-center h-full min-h-[200px]">
+        <div className="w-6 h-6 border-2 border-[#6D5DFB] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const { commits, trend, comparison, weeks, isMock } = data;
   const monthLabels = getMonthLabels(weeks);
   const dayLabels = ['M', '', 'W', '', 'F', '', ''];
 
@@ -36,8 +160,38 @@ export default function GitHubActivity() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.4 }}
-      className="bg-[#121523] border border-[#23273B] rounded-2xl p-5 flex flex-col h-full"
+      className="bg-[#121523] border border-[#23273B] rounded-2xl p-5 flex flex-col h-full relative overflow-hidden"
     >
+      {isMock && (
+        <div className="absolute inset-0 bg-[#121523]/80 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center rounded-2xl border border-[#23273B]">
+          <GitBranch size={32} className="text-[#6D5DFB] mb-3" />
+          <h3 className="text-white font-semibold mb-1">Connect GitHub</h3>
+          <p className="text-[#9CA3AF] text-xs mb-4 max-w-[200px] text-center">
+            Link your GitHub account to see your real contribution graph.
+          </p>
+          <button onClick={handleConnect} className="px-4 py-2 bg-[#6D5DFB] hover:bg-[#5a4ce6] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer mb-2">
+            Connect with 1-Click
+          </button>
+          <button 
+            onClick={() => {
+              const token = window.prompt("Paste your GitHub Personal Access Token (PAT) below:");
+              if (token && token.trim()) {
+                fetchGitHubUser(token.trim()).then(ghUser => {
+                  localStorage.setItem('github_token_fallback', token.trim());
+                  localStorage.setItem('github_username_fallback', ghUser.login);
+                  updateProfile(profile.id, { github_token: token.trim(), github_username: ghUser.login })
+                    .catch(err => console.warn("DB update failed but saved locally", err))
+                    .finally(() => window.location.reload());
+                }).catch(() => showError('Invalid Token', 'The Personal Access Token provided is invalid or expired.'));
+              }
+            }}
+            className="text-[#9CA3AF] text-[10px] hover:text-white transition-colors cursor-pointer underline"
+          >
+            Or manually enter a token
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-white text-sm font-semibold">GitHub Activity</h3>

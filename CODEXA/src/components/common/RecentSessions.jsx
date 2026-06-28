@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { recentSessionsData } from '../../data/mockData';
+import { Link } from 'react-router-dom';
+import { Clock } from 'lucide-react';
 
 function SessionRow({ session, index }) {
   return (
@@ -32,7 +33,7 @@ function SessionRow({ session, index }) {
   );
 }
 
-export default function RecentSessions() {
+export default function RecentSessions({ sessions = [], isEmpty = false }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -43,17 +44,32 @@ export default function RecentSessions() {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-white text-sm font-semibold">Recent Sessions</h3>
-        <button className="text-[#6D5DFB] text-xs font-medium hover:text-[#8B7CF8] transition-colors cursor-pointer">
-          View All
-        </button>
+        {sessions.length > 0 && (
+          <Link
+            to="/dashboard/sessions"
+            className="text-[#6D5DFB] text-xs font-medium hover:text-[#8B7CF8] transition-colors"
+          >
+            View All
+          </Link>
+        )}
       </div>
 
-      {/* Session list */}
-      <div className="flex flex-col divide-y divide-[#23273B]/50">
-        {recentSessionsData.map((session, i) => (
-          <SessionRow key={session.id} session={session} index={i} />
-        ))}
-      </div>
+      {/* Session list or empty state */}
+      {sessions.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center gap-2 py-4">
+          <Clock size={28} className="text-[#374151]" />
+          <p className="text-[#9CA3AF] text-sm">No sessions logged yet</p>
+          <p className="text-[#6B7280] text-xs max-w-[200px]">
+            Your coding sessions will appear here once you start tracking.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col divide-y divide-[#23273B]/50">
+          {sessions.map((session, i) => (
+            <SessionRow key={session.id} session={session} index={i} />
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }

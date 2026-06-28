@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import Logo from '../../components/common/Logo';
 
 const TIERS = [
   {
@@ -23,12 +24,7 @@ export default function Pricing() {
   return (
     <div className="min-h-screen bg-[#090B14] text-white">
       <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 border-b border-[#23273B]/60 bg-[#090B14]/80 backdrop-blur-xl">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#6D5DFB] flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L14 8L8 15L2 8L8 1Z" fill="white" fillOpacity="0.9"/><path d="M8 4L11 8L8 12L5 8L8 4Z" fill="white"/></svg>
-          </div>
-          <span className="text-white font-bold">Codexa</span>
-        </Link>
+        <Logo size={32} to="/" />
         <Link to="/register" className="bg-[#6D5DFB] hover:bg-[#5a4ce6] text-white text-sm font-semibold px-4 py-2 rounded-xl">Get Started</Link>
       </div>
 

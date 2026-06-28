@@ -4,6 +4,7 @@ import {
   FolderKanban,
   BarChart3,
   Target,
+  Trophy,
   CalendarDays,
   GitBranch,
   Settings,
@@ -14,10 +15,11 @@ export const NAV_ITEMS = [
   { id: 'sessions',  label: 'Sessions',  icon: Clock3,          path: '/dashboard/sessions'   },
   { id: 'projects',  label: 'Projects',  icon: FolderKanban,    path: '/dashboard/projects'   },
   { id: 'analytics', label: 'Analytics', icon: BarChart3,        path: '/dashboard/analytics'  },
-  { id: 'goals',     label: 'Goals',     icon: Target,           path: '/dashboard/goals'      },
-  { id: 'calendar',  label: 'Calendar',  icon: CalendarDays,     path: '/dashboard/calendar'   },
-  { id: 'github',    label: 'GitHub',    icon: GitBranch,        path: '/dashboard/github'     },
-  { id: 'settings',  label: 'Settings',  icon: Settings,         path: '/dashboard/settings'   },
+  { id: 'goals',       label: 'Goals',       icon: Target,       path: '/dashboard/goals'        },
+  { id: 'leaderboard', label: 'Leaderboard', icon: Trophy,       path: '/dashboard/leaderboard'  },
+  { id: 'calendar',   label: 'Calendar',    icon: CalendarDays, path: '/dashboard/calendar'     },
+  { id: 'github',     label: 'GitHub',      icon: GitBranch,    path: '/dashboard/github'       },
+  { id: 'settings',   label: 'Settings',    icon: Settings,     path: '/dashboard/settings'     },
 ];
 
 

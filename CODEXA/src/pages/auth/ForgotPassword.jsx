@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Mail } from 'lucide-react';
 import { forgotPassword } from '../../services/supabase/authService';
 import { useToast } from '../../contexts/NotificationContext';
+import Logo from '../../components/common/Logo';
 
 const schema = z.object({ email: z.string().email('Invalid email address') });
 
@@ -32,12 +33,9 @@ export default function ForgotPassword() {
   return (
     <div className="min-h-screen bg-[#090B14] flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-sm">
-        <Link to="/" className="flex items-center gap-2 justify-center mb-8">
-          <div className="w-9 h-9 rounded-xl bg-[#6D5DFB] flex items-center justify-center">
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="none"><path d="M8 1L14 8L8 15L2 8L8 1Z" fill="white" fillOpacity="0.9"/><path d="M8 4L11 8L8 12L5 8L8 4Z" fill="white"/></svg>
-          </div>
-          <span className="text-white text-xl font-bold">Codexa</span>
-        </Link>
+        <div className="flex justify-center mb-8">
+          <Logo size={42} textSizeClass="text-2xl" to="/" />
+        </div>
 
         <div className="bg-[#121523] border border-[#23273B] rounded-2xl p-6">
           {sent ? (

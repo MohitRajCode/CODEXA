@@ -25,9 +25,12 @@ import Sessions      from './pages/dashboard/Sessions';
 import Projects      from './pages/dashboard/Projects';
 import Analytics     from './pages/dashboard/Analytics';
 import Goals         from './pages/dashboard/Goals';
+import Leaderboard   from './pages/dashboard/Leaderboard';
 import Profile       from './pages/dashboard/Profile';
 import Settings      from './pages/dashboard/Settings';
 import Premium       from './pages/dashboard/Premium';
+import Calendar      from './pages/dashboard/Calendar';
+import Github        from './pages/dashboard/Github';
 
 export default function App() {
   return (
@@ -50,13 +53,16 @@ export default function App() {
               {/* ── Protected Dashboard ──────────────────────── */}
               <Route path="/dashboard" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                 <Route index            element={<Dashboard />} />
-                <Route path="sessions"  element={<Sessions />} />
-                <Route path="projects"  element={<Projects />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="goals"     element={<Goals />} />
-                <Route path="profile"   element={<Profile />} />
-                <Route path="settings"  element={<Settings />} />
-                <Route path="premium"   element={<Premium />} />
+                <Route path="sessions"     element={<Sessions />} />
+                <Route path="projects"     element={<Projects />} />
+                <Route path="analytics"    element={<Analytics />} />
+                <Route path="goals"        element={<Goals />} />
+                <Route path="leaderboard"  element={<Leaderboard />} />
+                <Route path="profile"      element={<Profile />} />
+                <Route path="settings"     element={<Settings />} />
+                <Route path="premium"      element={<Premium />} />
+                <Route path="calendar"     element={<Calendar />} />
+                <Route path="github"       element={<Github />} />
               </Route>
 
               {/* ── 404 ──────────────────────────────────────── */}

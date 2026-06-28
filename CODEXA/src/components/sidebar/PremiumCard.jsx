@@ -1,5 +1,4 @@
 import { Crown } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 export default function PremiumCard() {
   return (
@@ -10,18 +9,17 @@ export default function PremiumCard() {
           <Crown size={18} className="text-[#FACC15]" />
         </div>
 
-        <h3 className="text-white text-sm font-bold mb-1">Go Premium</h3>
+        <h3 className="text-white text-sm font-bold mb-1">Congratulations!</h3>
         <p className="text-white/60 text-xs leading-relaxed mb-4">
-          Unlock powerful insights and boost your productivity.
+          You won a free one month Pro trial. Enjoy the powerful insights!
         </p>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full bg-[#6D5DFB] hover:bg-[#5a4ce6] text-white text-xs font-semibold py-2.5 rounded-lg transition-colors cursor-pointer"
+        <button
+          disabled
+          className="w-full bg-[#23273B] text-[#9CA3AF] text-xs font-semibold py-2.5 rounded-lg transition-colors cursor-not-allowed"
         >
-          Upgrade Now
-        </motion.button>
+          Pro Active
+        </button>
       </div>
     </div>
   );

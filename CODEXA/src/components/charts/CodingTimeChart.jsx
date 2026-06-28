@@ -4,7 +4,6 @@ import {
   Tooltip, ResponsiveContainer, Cell, LabelList,
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { codingTimeData } from '../../data/mockData';
 
 // Custom rounded-top bar shape
 function RoundedBar(props) {
@@ -35,8 +34,14 @@ function yTickFormatter(v) {
   return `${v}h`;
 }
 
-export default function CodingTimeChart() {
-  const [period, setPeriod] = useState('This Week');
+export default function CodingTimeChart({ data = [], isEmpty = false }) {
+  const [period] = useState('This Week');
+
+  const maxHours = data.length > 0 ? Math.max(...data.map((d) => d.hours), 1) : 1;
+  const yMax = Math.ceil(maxHours) + 1;
+  const yTicks = Array.from({ length: Math.min(yMax + 1, 6) }, (_, i) =>
+    Math.round((i * yMax) / Math.min(yMax, 5))
+  );
 
   return (
     <motion.div
@@ -56,48 +61,60 @@ export default function CodingTimeChart() {
         </button>
       </div>
 
-      {/* Chart */}
-      <div className="flex-1 min-h-0" style={{ height: 200 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={codingTimeData}
-            margin={{ top: 20, right: 4, left: -20, bottom: 0 }}
-            barCategoryGap="30%"
-          >
-            <CartesianGrid vertical={false} stroke="#23273B" strokeDasharray="0" />
-            <XAxis
-              dataKey="day"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#9CA3AF', fontSize: 11 }}
-            />
-            <YAxis
-              tickFormatter={yTickFormatter}
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#9CA3AF', fontSize: 11 }}
-              ticks={[0, 2, 4, 6, 8]}
-              domain={[0, 8]}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(109,93,251,0.06)', radius: 6 }} />
-            <Bar dataKey="hours" shape={<RoundedBar />} maxBarSize={48}>
-              {codingTimeData.map((entry, i) => (
-                <Cell
-                  key={i}
-                  fill={entry.hours === Math.max(...codingTimeData.map(d => d.hours))
-                    ? '#6D5DFB'
-                    : '#4C3FBF'}
-                />
-              ))}
-              <LabelList
-                dataKey="label"
-                position="top"
-                style={{ fill: '#9CA3AF', fontSize: 10, fontFamily: 'Inter' }}
+      {/* Empty state */}
+      {isEmpty ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center gap-2">
+          <span className="text-3xl">📊</span>
+          <p className="text-[#9CA3AF] text-sm">No coding sessions yet</p>
+          <p className="text-[#6B7280] text-xs max-w-[200px]">
+            Start logging sessions and your weekly chart will appear here.
+          </p>
+        </div>
+      ) : (
+        /* Chart */
+        <div className="flex-1 min-h-0" style={{ height: 200 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              margin={{ top: 20, right: 4, left: -20, bottom: 0 }}
+              barCategoryGap="30%"
+            >
+              <CartesianGrid vertical={false} stroke="#23273B" strokeDasharray="0" />
+              <XAxis
+                dataKey="day"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#9CA3AF', fontSize: 11 }}
               />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+              <YAxis
+                tickFormatter={yTickFormatter}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#9CA3AF', fontSize: 11 }}
+                ticks={yTicks}
+                domain={[0, yMax]}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(109,93,251,0.06)', radius: 6 }} />
+              <Bar dataKey="hours" shape={<RoundedBar />} maxBarSize={48}>
+                {data.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={entry.hours === Math.max(...data.map((d) => d.hours))
+                      ? '#6D5DFB'
+                      : '#4C3FBF'}
+                  />
+                ))}
+                <LabelList
+                  dataKey="label"
+                  position="top"
+                  style={{ fill: '#9CA3AF', fontSize: 10, fontFamily: 'Inter' }}
+                  formatter={(v) => (v === '0m' ? '' : v)}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
     </motion.div>
   );
 }

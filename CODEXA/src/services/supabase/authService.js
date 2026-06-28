@@ -34,6 +34,19 @@ export async function signInWithOAuth(provider) {
   return data;
 }
 
+// ─── Link OAuth Identity ──────────────────────────────────────────────────────
+export async function linkGitHubIdentity() {
+  const { data, error } = await supabase.auth.linkIdentity({
+    provider: 'github',
+    options: {
+      redirectTo: `${window.location.origin}/dashboard`,
+      scopes: 'read:user user:email repo'
+    }
+  });
+  if (error) throw error;
+  return data;
+}
+
 // ─── Magic Link ───────────────────────────────────────────────────────────────
 export async function signInWithMagicLink(email) {
   const { data, error } = await supabase.auth.signInWithOtp({

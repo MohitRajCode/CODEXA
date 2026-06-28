@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Check, Zap, Crown } from 'lucide-react';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const PLANS = [
   {
@@ -8,7 +9,6 @@ const PLANS = [
     period: 'forever',
     color: '#6B7280',
     features: ['5 active projects', '30-day history', 'Basic analytics', 'GitHub sync (5 repos)'],
-    current: true,
   },
   {
     name: 'Pro',
@@ -29,6 +29,9 @@ const PLANS = [
 ];
 
 export default function Premium() {
+  const { profile } = useAuthContext();
+  const currentPlanName = (profile?.plan || 'free').toLowerCase();
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-5">
       <div className="text-center mb-10 max-w-xl mx-auto">
@@ -75,12 +78,12 @@ export default function Premium() {
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
-                plan.current ? 'bg-[#23273B] text-[#9CA3AF] cursor-default' :
+                plan.name.toLowerCase() === currentPlanName ? 'bg-[#23273B] text-[#9CA3AF] cursor-default' :
                 plan.popular ? 'bg-[#6D5DFB] hover:bg-[#5a4ce6] text-white' :
                 'bg-[#1E2235] border border-[#23273B] text-white hover:border-[#6D5DFB]/50'
               }`}
             >
-              {plan.current ? 'Current Plan' : `Upgrade to ${plan.name}`}
+              {plan.name.toLowerCase() === currentPlanName ? 'Current Plan' : `Upgrade to ${plan.name}`}
             </motion.button>
           </motion.div>
         ))}

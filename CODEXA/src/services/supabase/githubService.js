@@ -68,12 +68,47 @@ export async function fetchContributions(username, token) {
       }
     }
   `;
-  const { data } = await axios.post(
-    'https://api.github.com/graphql',
-    { query, variables: { login: username } },
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
-  return data?.data?.user?.contributionsCollection?.contributionCalendar;
+
+  try {
+    const { data } = await axios.post(
+      'https://api.github.com/graphql',
+      { query, variables: { login: username } },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    
+    if (data?.data?.user?.contributionsCollection?.contributionCalendar) {
+      return data.data.user.contributionsCollection.contributionCalendar;
+    }
+    throw new Error("Invalid GraphQL response");
+  } catch (err) {
+    console.warn("GraphQL contributions failed (likely 401 Unauthorized). Falling back to public API.", err.message);
+    
+    // Fallback to public Deno API if GraphQL fails (e.g., token lacks scopes or org SSO blocks it)
+    const fallbackRes = await axios.get(`https://github-contributions-api.deno.dev/${username}.json`);
+    const contribs = fallbackRes.data.contributions; // Array of arrays of { date, contributionCount }
+    
+    if (contribs) {
+      let total = 0;
+      const weeks = contribs.map(week => {
+        return {
+          contributionDays: week.map(day => {
+            total += day.contributionCount;
+            return {
+              date: day.date,
+              contributionCount: day.contributionCount
+            };
+          })
+        };
+      });
+      return { totalContributions: total, weeks };
+    }
+    
+    throw err;
+  }
 }
 
 // ─── Fetch Languages ──────────────────────────────────────────────────────────

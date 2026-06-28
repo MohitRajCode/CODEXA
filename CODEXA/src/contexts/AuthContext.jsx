@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabase/client';
-import { getProfile } from '../services/supabase/profileService';
+import { getProfile, updateProfile } from '../services/supabase/profileService';
 import { signOut as authSignOut } from '../services/supabase/authService';
+import { fetchGitHubUser } from '../services/supabase/githubService';
 
 const AuthContext = createContext(null);
 
@@ -12,8 +13,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Intercept URL hash immediately before Supabase clears it
+    const hash = window.location.hash;
+    if (hash && hash.includes('provider_token=')) {
+      const params = new URLSearchParams(hash.substring(1));
+      const pToken = params.get('provider_token');
+      if (pToken) localStorage.setItem('gh_token_pending', pToken);
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.provider_token) {
+        localStorage.setItem('gh_token_pending', session.provider_token);
+      }
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -26,6 +38,9 @@ export function AuthProvider({ children }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (session?.provider_token) {
+          localStorage.setItem('gh_token_pending', session.provider_token);
+        }
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -40,13 +55,70 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Process any pending GitHub token
+  useEffect(() => {
+    const pendingToken = localStorage.getItem('gh_token_pending');
+    if (pendingToken && user) {
+      fetchGitHubUser(pendingToken)
+        .then((ghUser) => {
+          if (ghUser && ghUser.login) {
+            // Save to localStorage as a reliable fallback in case DB update fails
+            localStorage.setItem('github_token_fallback', pendingToken);
+            localStorage.setItem('github_username_fallback', ghUser.login);
+            
+            // Set context immediately
+            setProfile(p => p ? { ...p, github_token: pendingToken, github_username: ghUser.login } : { github_token: pendingToken, github_username: ghUser.login });
+            localStorage.removeItem('gh_token_pending');
+
+            updateProfile(user.id, {
+              github_token: pendingToken,
+              github_username: ghUser.login
+            }).catch(err => {
+              console.warn("DB profile update failed, but token is saved locally.", err);
+            });
+          } else {
+            localStorage.removeItem('gh_token_pending'); // Invalid token
+          }
+        })
+        .catch((err) => {
+          console.error("fetchGitHubUser error:", err);
+          localStorage.removeItem('gh_token_pending'); // Likely Google token or error
+        });
+    }
+  }, [user]);
+
   async function loadProfile(userId) {
     try {
       const profileData = await getProfile(userId);
+      
+      // Merge fallback tokens if they exist (handles broken database profiles)
+      const fbToken = localStorage.getItem('github_token_fallback');
+      const fbUser = localStorage.getItem('github_username_fallback');
+      if (fbToken && fbUser) {
+        profileData.github_token = fbToken;
+        profileData.github_username = fbUser;
+      }
+
+      // Merge LeetCode username fallback
+      const lcUser = localStorage.getItem('lc_username_fallback');
+      if (lcUser && !profileData.leetcode_username) {
+        profileData.leetcode_username = lcUser;
+      }
+      
+      // Give everyone a free month of Pro
+      if (!profileData.plan || profileData.plan === 'free') {
+        profileData.plan = 'pro';
+      }
+
       setProfile(profileData);
     } catch {
-      // Profile may not exist yet (new user)
-      setProfile(null);
+      // Profile may not exist yet (new user), use fallback if available
+      const fbToken = localStorage.getItem('github_token_fallback');
+      const fbUser = localStorage.getItem('github_username_fallback');
+      const lcUser = localStorage.getItem('lc_username_fallback');
+      setProfile(fbToken
+        ? { github_token: fbToken, github_username: fbUser, leetcode_username: lcUser || null, plan: 'pro' }
+        : lcUser ? { leetcode_username: lcUser, plan: 'pro' } : { plan: 'pro' });
     } finally {
       setLoading(false);
     }

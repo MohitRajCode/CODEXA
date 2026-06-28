@@ -20,7 +20,7 @@ export default function StatCard({ card, index }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.07 }}
       whileHover={{ y: -2, transition: { duration: 0.15 } }}
-      className="bg-[#121523] border border-[#23273B] rounded-2xl p-4 flex items-start gap-3 flex-1 min-w-0"
+      className="bg-[#0D0F1E] border border-[#1E2235] rounded-2xl p-4 flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
     >
       {/* Icon circle */}
       <div

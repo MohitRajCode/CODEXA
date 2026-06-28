@@ -7,7 +7,7 @@ export default function Layout() {
   const { isOpen, close } = useSidebar();
 
   return (
-    <div className="flex h-screen bg-[#090B14] overflow-hidden">
+    <div className="flex h-screen bg-[#080A14] overflow-hidden 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-x 2xl:border-[#1E2235]">
       <Sidebar isOpen={isOpen} />
 
       {/* Mobile overlay */}
