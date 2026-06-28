@@ -61,7 +61,10 @@ export default function GitHubActivity() {
 
   const handleConnect = async () => {
     try {
-      await linkGitHubIdentity();
+      const data = await linkGitHubIdentity();
+      if (data?.url) {
+        window.location.href = data.url;
+      }
     } catch (err) {
       console.error("OAuth Link Error:", err);
       showError('OAuth Failed', `Error: ${err.message}. Falling back to token method.`);
