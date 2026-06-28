@@ -170,6 +170,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_profiles_updated_at ON profiles;
+DROP TRIGGER IF EXISTS trg_projects_updated_at ON projects;
+DROP TRIGGER IF EXISTS trg_sessions_updated_at ON sessions;
+DROP TRIGGER IF EXISTS trg_goals_updated_at ON goals;
+DROP TRIGGER IF EXISTS trg_settings_updated_at ON user_settings;
+
 CREATE TRIGGER trg_profiles_updated_at  BEFORE UPDATE ON profiles  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER trg_projects_updated_at  BEFORE UPDATE ON projects  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER trg_sessions_updated_at  BEFORE UPDATE ON sessions  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
@@ -197,6 +203,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_on_auth_user_created ON auth.users;
 CREATE TRIGGER trg_on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();

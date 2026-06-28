@@ -85,6 +85,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trg_session_stats ON sessions;
 CREATE TRIGGER trg_session_stats
   AFTER INSERT OR UPDATE ON sessions
   FOR EACH ROW EXECUTE FUNCTION trigger_update_daily_stats();

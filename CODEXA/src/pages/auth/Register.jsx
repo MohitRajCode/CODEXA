@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useState } from 'react';
-import { signUp, signInWithOAuth } from '../../services/supabase/authService';
+import { signUp } from '../../services/supabase/authService';
 import { useToast } from '../../contexts/NotificationContext';
 
 const schema = z.object({
@@ -33,10 +33,11 @@ export default function Register() {
     setIsLoading(true);
     try {
       await signUp({ email: values.email, password: values.password, fullName: values.fullName, username: values.username });
-      success('Account created!', 'Please check your email to verify your account.');
-      navigate('/verify-email');
+      success('Account created! 🎉', 'Check your email to verify your account, then sign in.');
+      navigate('/login');
     } catch (err) {
-      showError('Registration failed', err.message);
+      console.error('[Register] signUp error:', err);
+      showError('Registration failed', err.message || 'An unexpected error occurred. Check browser console for details.');
     } finally {
       setIsLoading(false);
     }
@@ -64,17 +65,20 @@ export default function Register() {
           <h1 className="text-white text-xl font-bold mb-1">Create your account</h1>
           <p className="text-[#9CA3AF] text-sm mb-5">Start tracking your coding journey</p>
 
-          {/* OAuth */}
+          {/* OAuth — disabled until configured in Supabase Auth → Providers */}
           <div className="flex gap-3 mb-5">
-            {['github', 'google'].map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => signInWithOAuth(p)}
-                className="flex-1 py-2.5 rounded-xl bg-[#1E2235] border border-[#23273B] text-white text-sm font-medium capitalize hover:border-[#6D5DFB]/50 transition-colors cursor-pointer"
-              >
-                {p === 'github' ? 'GitHub' : 'Google'}
-              </button>
+            {['GitHub', 'Google'].map((label) => (
+              <div key={label} className="relative flex-1 group">
+                <button
+                  type="button"
+                  className="w-full py-2.5 rounded-xl bg-[#1E2235] border border-[#23273B] text-[#6B7280] text-sm font-medium cursor-not-allowed"
+                >
+                  {label}
+                </button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-[#1E2235] border border-[#23273B] rounded-lg px-3 py-2 text-[10px] text-[#9CA3AF] text-center z-10 shadow-xl hidden group-hover:block pointer-events-none">
+                  Enable {label} in Supabase → Auth → Providers
+                </div>
+              </div>
             ))}
           </div>
 
