@@ -8,6 +8,7 @@ import {
   CalendarDays,
   GitBranch,
   Settings,
+  Zap,
 } from 'lucide-react';
 
 export const NAV_ITEMS = [
@@ -20,6 +21,7 @@ export const NAV_ITEMS = [
   { id: 'calendar',   label: 'Calendar',    icon: CalendarDays, path: '/dashboard/calendar'     },
   { id: 'github',     label: 'GitHub',      icon: GitBranch,    path: '/dashboard/github'       },
   { id: 'settings',   label: 'Settings',    icon: Settings,     path: '/dashboard/settings'     },
+  { id: 'focus',      label: 'Focus Mode',  icon: Zap,          path: '/dashboard/focus'        },
 ];
 
 

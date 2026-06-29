@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabase/client';
-import { getProfile, updateProfile } from '../services/supabase/profileService';
+import { getProfile, updateProfile, createProfile } from '../services/supabase/profileService';
 import { signOut as authSignOut } from '../services/supabase/authService';
 import { fetchGitHubUser } from '../services/supabase/githubService';
 
@@ -112,13 +112,29 @@ export function AuthProvider({ children }) {
 
       setProfile(profileData);
     } catch {
-      // Profile may not exist yet (new user), use fallback if available
+      // Profile may not exist yet (e.g. trigger failed during signup)
+      // Attempt to create it now
       const fbToken = localStorage.getItem('github_token_fallback');
       const fbUser = localStorage.getItem('github_username_fallback');
       const lcUser = localStorage.getItem('lc_username_fallback');
-      setProfile(fbToken
-        ? { github_token: fbToken, github_username: fbUser, leetcode_username: lcUser || null, plan: 'pro' }
-        : lcUser ? { leetcode_username: lcUser, plan: 'pro' } : { plan: 'pro' });
+      
+      const dbProfile = {
+        username: `user_${userId.substring(0, 8)}`,
+        plan: 'pro',
+        github_token: fbToken || null,
+        github_username: fbUser || null
+      };
+
+      try {
+        const newProfile = await createProfile(userId, dbProfile);
+        if (lcUser) newProfile.leetcode_username = lcUser;
+        setProfile(newProfile);
+      } catch (createErr) {
+        console.warn("Failed to create missing profile:", createErr);
+        // Fallback if we still can't create it (e.g. RLS policy not applied yet)
+        const fallbackProfile = { ...dbProfile, leetcode_username: lcUser || null };
+        setProfile(fallbackProfile);
+      }
     } finally {
       setLoading(false);
     }

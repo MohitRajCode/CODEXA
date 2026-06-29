@@ -23,6 +23,17 @@ export async function updateProfile(userId, updates) {
   return data;
 }
 
+// ─── Create Profile ───────────────────────────────────────────────────────────
+export async function createProfile(userId, profileData) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert({ id: userId, ...profileData, updated_at: new Date().toISOString() })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // ─── Get User Role ────────────────────────────────────────────────────────────
 export async function getUserRole(userId) {
   const { data, error } = await supabase

@@ -31,6 +31,7 @@ import Settings      from './pages/dashboard/Settings';
 import Premium       from './pages/dashboard/Premium';
 import Calendar      from './pages/dashboard/Calendar';
 import Github        from './pages/dashboard/Github';
+import FocusMode     from './pages/dashboard/FocusMode';
 
 export default function App() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="premium"      element={<Premium />} />
                 <Route path="calendar"     element={<Calendar />} />
                 <Route path="github"       element={<Github />} />
+                <Route path="focus"        element={<FocusMode />} />
               </Route>
 
               {/* ── 404 ──────────────────────────────────────── */}
