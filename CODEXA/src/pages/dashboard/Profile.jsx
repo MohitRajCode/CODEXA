@@ -3,11 +3,19 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useState } from 'react';
-import { Camera, Save } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Camera, Save, Loader2 } from 'lucide-react';
 import { useToast } from '../../contexts/NotificationContext';
-import { updateProfile } from '../../services/supabase/profileService';
+import { updateProfile, uploadAvatar } from '../../services/supabase/profileService';
 import { fetchGitHubUser } from '../../services/supabase/githubService';
+
+function GitHubIcon({ className }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.929.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+    </svg>
+  );
+}
 
 const schema = z.object({
   full_name: z.string().min(2),
@@ -26,6 +34,32 @@ export default function Profile() {
   const { user, profile, refreshProfile } = useAuthContext();
   const { success, error: showError } = useToast();
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [localAvatar, setLocalAvatar] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const avatarSrc = localAvatar || profile?.avatar_url;
+
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Show a local preview immediately
+    const previewUrl = URL.createObjectURL(file);
+    setLocalAvatar(previewUrl);
+    setUploading(true);
+    try {
+      await uploadAvatar(user.id, file);
+      await refreshProfile();
+      success('Avatar updated!', 'Your profile picture has been saved.');
+    } catch (err) {
+      showError('Upload failed', err.message);
+      setLocalAvatar(null); // revert preview on error
+    } finally {
+      setUploading(false);
+      // Reset input so the same file can be re-selected if needed
+      e.target.value = '';
+    }
+  }
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -94,9 +128,9 @@ export default function Profile() {
       {/* Avatar */}
       <div className="flex items-center gap-4 mb-6 p-5 bg-[#121523] border border-[#23273B] rounded-2xl">
         <div className="relative">
-          {profile?.avatar_url ? (
+          {avatarSrc ? (
             <img
-              src={profile.avatar_url}
+              src={avatarSrc}
               alt="Avatar"
               className="w-16 h-16 rounded-full object-cover border-2 border-[#6D5DFB]"
             />
@@ -105,8 +139,24 @@ export default function Profile() {
               {(profile?.full_name || profile?.username || '?').slice(0, 2).toUpperCase()}
             </div>
           )}
-          <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#6D5DFB] rounded-full flex items-center justify-center cursor-pointer">
-            <Camera size={13} className="text-white" />
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#6D5DFB] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#5a4ce6] transition-colors disabled:opacity-70"
+            title="Change profile picture"
+          >
+            {uploading
+              ? <Loader2 size={12} className="text-white animate-spin" />
+              : <Camera size={13} className="text-white" />}
           </button>
         </div>
         <div>
@@ -163,7 +213,7 @@ export default function Profile() {
         {/* GitHub Section */}
         <div className="border border-[#23273B] rounded-xl p-4 space-y-3 bg-[#0D101D]/50">
           <div className="flex items-center gap-2 mb-1">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-[#9CA3AF]"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.929.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+            <GitHubIcon className="text-[#9CA3AF]" />
             <p className="text-white text-sm font-semibold">GitHub Integration</p>
           </div>
           <div>

@@ -48,18 +48,24 @@ export async function getUserRole(userId) {
 // ─── Upload Avatar ────────────────────────────────────────────────────────────
 export async function uploadAvatar(userId, file) {
   const fileExt = file.name.split('.').pop();
-  const filePath = `avatars/${userId}.${fileExt}`;
+  const filePath = `${userId}.${fileExt}`;
 
   const { error: uploadError } = await supabase.storage
     .from('avatars')
-    .upload(filePath, file, { upsert: true });
-  if (uploadError) throw uploadError;
+    .upload(filePath, file, { upsert: true, contentType: file.type });
+
+  if (uploadError) {
+    console.error('Avatar upload error:', uploadError);
+    throw uploadError;
+  }
 
   const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
 
   await updateProfile(userId, { avatar_url: data.publicUrl });
   return data.publicUrl;
 }
+
+
 
 // ─── Search Profiles (admin) ──────────────────────────────────────────────────
 export async function searchProfiles(query) {
